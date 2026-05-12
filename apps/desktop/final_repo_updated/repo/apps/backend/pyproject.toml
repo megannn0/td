@@ -1,0 +1,34 @@
+[project]
+name = "telegram-drive-backend"
+version = "0.1.0"
+description = "FastAPI backend for the Telegram Drive project."
+requires-python = ">=3.11"
+dependencies = [
+    # Core web framework and ASGI server
+    "fastapi>=0.111.0",
+    "uvicorn>=0.20.0",
+    # Database and schema management
+    "sqlalchemy>=2.0.0",
+    "pydantic>=2.0.0",
+    # Telegram TDLib JSON bindings
+    "tdjson>=1.8.0",
+    # aiotdlib has been removed as a direct dependency.  It was
+    # previously specified without a version, which resulted in
+    # invalid TOML syntax.  The backend communicates with TDLib via
+    # tdjson and does not require aiotdlib.
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4",
+]
+
+[tool.setuptools.packages.find]
+# Configure setuptools to discover packages from the project root.
+# Using ``where = ["."]`` ensures that ``app`` and its subpackages are
+# included.  ``include = ["app*"]`` further filters the discovered
+# packages to those starting with ``app``.  Without this, ``pip
+# install -e .`` may fail to locate the package when the project root
+# layout is non‑standard.
+where = ["."]
+include = ["app*"]

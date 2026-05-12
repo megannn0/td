@@ -1,0 +1,11 @@
+[package]
+name = "telegram_drive_desktop"
+version = "0.1.0"
+description = "Telegram Drive desktop application."
+edition = "2021"
+
+[dependencies]
+tauri = { version = "1.5.4", features = ["api-all"] }
+
+[build-dependencies]
+tauri-build = "1.5.4"

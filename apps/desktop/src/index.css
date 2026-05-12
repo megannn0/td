@@ -1,0 +1,117 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ================================
+   Windows 11 Fluent Design System
+   ================================ */
+
+:root {
+  /* Acrylic/Mica colors */
+  --fluent-acrylic: rgba(255, 255, 255, 0.6);
+  --fluent-acrylic-dark: rgba(0, 0, 0, 0.5);
+  --fluent-bg: #F2F2F2;
+  --fluent-bg-card: rgba(255, 255, 255, 0.85);
+  --fluent-sidebar: rgba(243, 243, 243, 0.85);
+  --fluent-sidebar-dark: rgba(32, 32, 32, 0.85);
+  --fluent-accent: #60CD18;
+  --fluent-accent-hover: #52B415;
+  --fluent-accent-soft: rgba(96, 205, 24, 0.1);
+  --fluent-selection: rgba(96, 205, 24, 0.15);
+  --fluent-text: #000000;
+  --fluent-text-secondary: #616161;
+  --fluent-text-tertiary: #9E9E9E;
+  --fluent-border: rgba(0, 0, 0, 0.08);
+  --fluent-border-hover: rgba(0, 0, 0, 0.14);
+  --fluent-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --fluent-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.1);
+  --fluent-radius: 8px;
+  --fluent-radius-sm: 6px;
+  --fluent-radius-lg: 12px;
+  --fluent-radius-xl: 16px;
+  --fluent-nav-width: 280px;
+  --fluent-font: 'Segoe UI Variable', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.dark {
+  --fluent-acrylic: rgba(0, 0, 0, 0.5);
+  --fluent-bg: #1C1C1C;
+  --fluent-bg-card: rgba(44, 44, 44, 0.85);
+  --fluent-sidebar: rgba(32, 32, 32, 0.9);
+  --fluent-accent: #60CD18;
+  --fluent-accent-soft: rgba(96, 205, 24, 0.12);
+  --fluent-selection: rgba(96, 205, 24, 0.2);
+  --fluent-text: #FFFFFF;
+  --fluent-text-secondary: #ABABAB;
+  --fluent-text-tertiary: #6E6E6E;
+  --fluent-border: rgba(255, 255, 255, 0.08);
+  --fluent-border-hover: rgba(255, 255, 255, 0.14);
+  --fluent-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  --fluent-shadow-hover: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  font-family: var(--fluent-font);
+  color: var(--fluent-text);
+  background: var(--fluent-bg);
+  margin: 0;
+  padding: 0;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+#root { height: 100vh; width: 100vw; }
+
+/* Mica backdrop */
+.mica {
+  background: var(--fluent-acrylic);
+  backdrop-filter: blur(30px) saturate(1.2);
+  -webkit-backdrop-filter: blur(30px) saturate(1.2);
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(128, 128, 128, 0.3); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(128, 128, 128, 0.5); }
+
+/* Selection */
+::selection { background: var(--fluent-accent); color: white; }
+
+/* Card base */
+.fluent-card {
+  background: var(--fluent-bg-card);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--fluent-border);
+  border-radius: var(--fluent-radius);
+  box-shadow: var(--fluent-shadow);
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.fluent-card:hover {
+  box-shadow: var(--fluent-shadow-hover);
+  transform: translateY(-2px);
+}
+.fluent-card.selected {
+  border-color: var(--fluent-accent);
+  box-shadow: 0 0 0 1.5px var(--fluent-accent), var(--fluent-shadow);
+}
+
+/* Nav item */
+.nav-item {
+  border-radius: var(--fluent-radius-sm);
+  transition: background 0.15s ease;
+  cursor: pointer;
+  color: var(--fluent-text-secondary);
+}
+.nav-item:hover { background: rgba(128, 128, 128, 0.08); color: var(--fluent-text); }
+.nav-item.active {
+  background: var(--fluent-selection);
+  color: var(--fluent-accent);
+}
+
+/* Button base */
+button { font-family: inherit; cursor: pointer; outline: none; border: none; }
