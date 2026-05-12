@@ -17,6 +17,7 @@ import type { File as AppFile } from '../../types/file';
 import type { Folder } from '../../types/folder';
 import type { ExplorerItem } from './FileCard';
 import { dispatchRefresh, REFRESH_ALL } from '../../utils/events';
+import { useClipboard } from '../../hooks/useClipboard';
 
 function isFile(item: ExplorerItem): item is AppFile & { type?: 'file' } {
   return (item as AppFile).mime_type !== undefined;
@@ -66,6 +67,7 @@ const FileExplorer: React.FC = () => {
   const { folders, update: updateFolder, remove: removeFolder, refresh: refreshFolders } = useFolders(currentFolderId);
   const { uploadFiles, uploading } = useUpload();
   const { refresh: refreshTransfers } = useTransfers();
+  const { clipboard, copyToClipboard, clearClipboard } = useClipboard();
 
   // Single selected item (for highlighting / details panel)
   const [selectedItem, setSelectedItem] = useState<ExplorerItem | null>(null);
@@ -213,7 +215,8 @@ const FileExplorer: React.FC = () => {
     dispatchRefresh(REFRESH_ALL);
   };
 
-  // Build context menu items
+  // Build context menu items matching the screenshot layout:
+  // Open, Download, separator, Cut, Copy, Paste, separator, Rename, Delete, separator, Folder color, separator, Properties
   const contextMenuItems: ContextMenuItem[] = useMemo(() => {
     const i = contextMenu.item;
     if (!contextMenu.isOpen || !i) return [];
@@ -221,111 +224,110 @@ const FileExplorer: React.FC = () => {
     const selectedItems = getSelectedItems();
     const multiSelect = selectedItems.length > 1;
 
-    if (isFile(i)) {
-      if (!multiSelect) {
-        menuItems.push({
-          label: 'Open',
-          onClick: () => {
+    // Open
+    if (!multiSelect) {
+      menuItems.push({
+        label: 'Open',
+        onClick: () => {
+          if (isFile(i)) {
             setSelectedFile(i as AppFile);
             setSelectedItem(i);
-          },
-        });
-        menuItems.push({
-          label: 'Download',
-          onClick: async () => {
-            const fileId = (i as AppFile).id;
-            const fileName = (i as AppFile).name;
-            await downloadFile(fileId, fileName);
-          },
-        });
-      }
-      menuItems.push({
-        label: multiSelect ? `Move ${selectedItems.length} items…` : 'Move to…',
-        separator: true,
-        onClick: () => {
-          setMoveDialog({
-            open: true,
-            items: multiSelect ? selectedItems : [i],
-            mode: 'move',
-          });
-        },
-      });
-      if (!multiSelect) {
-        menuItems.push({
-          label: 'Edit Tags',
-          onClick: () => {
-            setSelectedFile(i as AppFile);
-          },
-        });
-        menuItems.push({
-          label: 'Properties',
-          separator: true,
-          onClick: () => {
-            setSelectedFile(i as AppFile);
-          },
-        });
-      }
-    } else {
-      // Folder actions
-      if (!multiSelect) {
-        menuItems.push({
-          label: 'Open',
-          onClick: () => {
+          } else {
             const folder = i as Folder;
             setCurrentFolderId(folder.id);
             setSelectedItem(null);
             setSelectedFile(null);
             setSelectedIds(new Set());
-          },
-        });
-      }
-      menuItems.push({
-        label: multiSelect ? `Move ${selectedItems.length} items…` : 'Move to…',
-        separator: !multiSelect,
-        onClick: () => {
-          setMoveDialog({
-            open: true,
-            items: multiSelect ? selectedItems : [i],
-            mode: 'move',
-          });
+          }
         },
       });
-      if (!multiSelect) {
-        menuItems.push({
-          label: 'Rename',
-          onClick: async () => {
+    }
+
+    // Download (files only)
+    if (isFile(i) && !multiSelect) {
+      menuItems.push({
+        label: 'Download',
+        onClick: async () => {
+          await downloadFile((i as AppFile).id, (i as AppFile).name);
+        },
+      });
+    }
+
+    menuItems.push({ label: '', separator: true });
+
+    // Cut
+    if (isFile(i) && !multiSelect) {
+      menuItems.push({
+        label: 'Cut',
+        onClick: () => {
+          copyToClipboard(i as AppFile, 'cut');
+        },
+      });
+    }
+
+    // Copy
+    if (isFile(i) && !multiSelect) {
+      menuItems.push({
+        label: 'Copy',
+        onClick: () => {
+          copyToClipboard(i as AppFile, 'copy');
+        },
+      });
+    }
+
+    // Paste
+    if (clipboard) {
+      menuItems.push({
+        label: 'Paste',
+        onClick: async () => {
+          const targetFolder = isFile(i) ? currentFolderId : (i as Folder).id;
+          if (clipboard.mode === 'copy') {
+            await filesApi.copyFile(clipboard.file.id, targetFolder);
+          } else if (clipboard.mode === 'cut') {
+            await filesApi.updateFile(clipboard.file.id, { folder_id: targetFolder });
+            clearClipboard();
+          }
+          dispatchRefresh(REFRESH_ALL);
+        },
+      });
+    }
+
+    menuItems.push({ label: '', separator: true });
+
+    // Rename
+    if (!multiSelect) {
+      menuItems.push({
+        label: 'Rename',
+        onClick: async () => {
+          if (isFile(i)) {
+            const newName = prompt('Rename:', (i as AppFile).name);
+            if (newName && newName.trim()) {
+              await filesApi.updateFile((i as AppFile).id, { name: newName.trim() });
+              dispatchRefresh(REFRESH_ALL);
+            }
+          } else {
             const currentName = (i as Folder).name;
             const newName = prompt('New folder name:', currentName);
             if (newName && newName.trim() && newName.trim() !== currentName) {
               await updateFolder((i as Folder).id, { name: newName.trim() });
               dispatchRefresh(REFRESH_ALL);
             }
-          },
-        });
-        menuItems.push({
-          label: 'Delete',
-          separator: true,
-          onClick: async () => {
-            if (!confirm('Delete this folder and all its contents?')) return;
-            await removeFolder((i as Folder).id);
-            dispatchRefresh(REFRESH_ALL);
-            setSelectedFile(null);
-            setSelectedItem(null);
-            setSelectedIds(new Set());
-          },
-        });
-      }
+          }
+        },
+      });
     }
 
-    // Delete for multi-select
+    // Delete
     if (multiSelect) {
       menuItems.push({
         label: `Delete ${selectedItems.length} items`,
-        separator: true,
+        danger: true,
         onClick: async () => {
           if (!confirm(`Delete ${selectedItems.length} items?`)) return;
           for (const it of selectedItems) {
-            if (!isFile(it)) {
+            if (isFile(it)) {
+              await filesApi.deleteFile((it as AppFile).id);
+            } else {
               await removeFolder((it as Folder).id);
             }
           }
@@ -335,11 +337,54 @@ const FileExplorer: React.FC = () => {
           setSelectedIds(new Set());
         },
       });
+    } else {
+      menuItems.push({
+        label: 'Delete',
+        danger: true,
+        onClick: async () => {
+          if (isFile(i)) {
+            if (!confirm(`Delete "${(i as AppFile).name}"?`)) return;
+            await filesApi.deleteFile((i as AppFile).id);
+          } else {
+            if (!confirm('Delete this folder and all its contents?')) return;
+            await removeFolder((i as Folder).id);
+          }
+          dispatchRefresh(REFRESH_ALL);
+          setSelectedFile(null);
+          setSelectedItem(null);
+          setSelectedIds(new Set());
+        },
+      });
+    }
+
+    // Folder color (folders only)
+    if (!isFile(i) && !multiSelect) {
+      menuItems.push({ label: '', separator: true });
+      menuItems.push({
+        label: 'Folder color',
+        onClick: () => {
+          alert('Folder color customization will be available in a future update.');
+        },
+      });
+    }
+
+    // Properties
+    if (!multiSelect) {
+      menuItems.push({ label: '', separator: true });
+      menuItems.push({
+        label: 'Properties',
+        onClick: () => {
+          if (isFile(i)) {
+            setSelectedFile(i as AppFile);
+          }
+          setSelectedItem(i);
+        },
+      });
     }
 
     return menuItems;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [contextMenu.isOpen, contextMenu.item, selectedIds]);
+  }, [contextMenu.isOpen, contextMenu.item, selectedIds, clipboard]);
 
   const onDropFiles = async (dropped: File[]) => {
     if (dropped.length === 0) return;
