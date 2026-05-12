@@ -55,6 +55,10 @@ const TopBar: React.FC = () => {
   const { clipboard, copyToClipboard, clearClipboard } = useClipboard();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const folderInputRef = useRef<HTMLInputElement>(null);
+  const uploadMenuRef = useRef<HTMLDivElement>(null);
+  const downloadMenuRef = useRef<HTMLDivElement>(null);
+  const sortMenuRef = useRef<HTMLDivElement>(null);
+  const viewMenuRef = useRef<HTMLDivElement>(null);
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [showSortMenu, setShowSortMenu] = useState(false);
@@ -73,6 +77,18 @@ const TopBar: React.FC = () => {
     try { const s = localStorage.getItem('viewMode'); if (s === 'list' || s === 'grid') setViewMode(s); } catch {}
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (showUploadMenu && uploadMenuRef.current && !uploadMenuRef.current.contains(target)) setShowUploadMenu(false);
+      if (showDownloadMenu && downloadMenuRef.current && !downloadMenuRef.current.contains(target)) setShowDownloadMenu(false);
+      if (showSortMenu && sortMenuRef.current && !sortMenuRef.current.contains(target)) setShowSortMenu(false);
+      if (showViewMenu && viewMenuRef.current && !viewMenuRef.current.contains(target)) setShowViewMenu(false);
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showUploadMenu, showDownloadMenu, showSortMenu, showViewMenu]);
 
   const handleUploadFiles = () => { setShowUploadMenu(false); fileInputRef.current?.click(); };
   const handleUploadFolder = () => { setShowUploadMenu(false); folderInputRef.current?.click(); };
@@ -189,7 +205,7 @@ const TopBar: React.FC = () => {
   }
 
   return (
-    <div style={{ background: 'var(--fluent-sidebar)', backdropFilter: 'blur(40px)', borderBottom: '1px solid var(--fluent-border)' }}>
+    <div style={{ background: 'var(--fluent-sidebar)', backdropFilter: 'blur(40px)', borderBottom: '1px solid var(--fluent-border)', position: 'relative', zIndex: 50 }}>
       {/* Navigation row */}
       <div className="flex items-center px-2 h-10 gap-1" style={{ borderBottom: '1px solid var(--fluent-border)' }}>
         <ToolbarBtn onClick={() => {}} title="Back"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><polyline points="15 18 9 12 15 6"/></svg></ToolbarBtn>
@@ -213,7 +229,7 @@ const TopBar: React.FC = () => {
       {/* Toolbar row */}
       <div className="flex items-center px-2 h-11 gap-0.5">
         {/* Upload dropdown */}
-        <div className="relative">
+        <div className="relative" ref={uploadMenuRef}>
           <ToolbarTextBtn
             onClick={() => setShowUploadMenu(!showUploadMenu)}
             title="Upload"
@@ -223,7 +239,6 @@ const TopBar: React.FC = () => {
           />
           {showUploadMenu && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowUploadMenu(false)} />
               <div className="absolute left-0 top-full mt-1 z-50 py-1 rounded-lg overflow-hidden" style={{ background: 'var(--fluent-bg-card)', backdropFilter: 'blur(30px)', border: '1px solid var(--fluent-border)', boxShadow: 'var(--fluent-shadow-hover)', minWidth: 150 }}>
                 <button onClick={handleUploadFiles}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-sm transition hover:bg-black/5 dark:hover:bg-white/10"
@@ -252,7 +267,7 @@ const TopBar: React.FC = () => {
         />
 
         {/* Download dropdown */}
-        <div className="relative">
+        <div className="relative" ref={downloadMenuRef}>
           <ToolbarTextBtn
             onClick={() => setShowDownloadMenu(!showDownloadMenu)}
             title="Download"
@@ -263,7 +278,6 @@ const TopBar: React.FC = () => {
           />
           {showDownloadMenu && selectedFile && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowDownloadMenu(false)} />
               <div className="absolute left-0 top-full mt-1 z-50 py-1 rounded-lg overflow-hidden" style={{ background: 'var(--fluent-bg-card)', backdropFilter: 'blur(30px)', border: '1px solid var(--fluent-border)', boxShadow: 'var(--fluent-shadow-hover)', minWidth: 170 }}>
                 <button onClick={handleDownloadDefault}
                   className="w-full flex items-center gap-2 px-3 py-1.5 text-sm transition hover:bg-black/5 dark:hover:bg-white/10"
@@ -313,7 +327,7 @@ const TopBar: React.FC = () => {
         <ToolbarDivider />
 
         {/* Sort dropdown */}
-        <div className="relative">
+        <div className="relative" ref={sortMenuRef}>
           <ToolbarTextBtn
             onClick={() => setShowSortMenu(!showSortMenu)}
             title="Sort"
@@ -323,7 +337,6 @@ const TopBar: React.FC = () => {
           />
           {showSortMenu && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowSortMenu(false)} />
               <div className="absolute right-0 top-full mt-1 z-50 py-1 rounded-lg overflow-hidden" style={{ background: 'var(--fluent-bg-card)', backdropFilter: 'blur(30px)', border: '1px solid var(--fluent-border)', boxShadow: 'var(--fluent-shadow-hover)', minWidth: 150 }}>
                 {(['Name', 'Date', 'Size', 'Type'] as const).map((s) => {
                   const field = s.toLowerCase() as 'name' | 'size' | 'date' | 'type';
@@ -355,7 +368,7 @@ const TopBar: React.FC = () => {
         </div>
 
         {/* View dropdown */}
-        <div className="relative">
+        <div className="relative" ref={viewMenuRef}>
           <ToolbarTextBtn
             onClick={() => setShowViewMenu(!showViewMenu)}
             title="View"
@@ -369,7 +382,6 @@ const TopBar: React.FC = () => {
           />
           {showViewMenu && (
             <>
-              <div className="fixed inset-0 z-40" onClick={() => setShowViewMenu(false)} />
               <div className="absolute right-0 top-full mt-1 z-50 py-1 rounded-lg overflow-hidden" style={{ background: 'var(--fluent-bg-card)', backdropFilter: 'blur(30px)', border: '1px solid var(--fluent-border)', boxShadow: 'var(--fluent-shadow-hover)', minWidth: 150 }}>
                 {[
                   { label: 'Icons', mode: 'grid' as const, icon: <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg> },
