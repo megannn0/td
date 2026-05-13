@@ -51,6 +51,7 @@ const FolderCreateDialog: React.FC<FolderCreateDialogProps> = ({ isOpen, onClose
       <div className="space-y-2">
         <label className="block text-sm font-medium" style={{ color: 'var(--fluent-text)' }}>Folder Name</label>
         <input type="text" value={name} onChange={(e) => setName(e.target.value)} disabled={saving}
+          onKeyDown={(e) => { if (e.key === 'Enter' && !saving) handleCreate(); }}
           className="w-full rounded-lg px-3 py-2 text-sm"
           style={{ background: 'var(--fluent-bg-secondary)', border: '1px solid var(--fluent-border)', color: 'var(--fluent-text)' }}
           autoFocus />
