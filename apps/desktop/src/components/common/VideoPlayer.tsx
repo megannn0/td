@@ -17,6 +17,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, fileId, onWatched }) => 
   const [canPlayThrough, setCanPlayThrough] = React.useState(false);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const watchedRef = React.useRef<boolean>(false);
+  const metadataLoadedRef = React.useRef<boolean>(false);
 
   React.useEffect(() => {
     setMetadataLoaded(false);
@@ -24,21 +25,21 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, fileId, onWatched }) => 
     setLoading(true);
     setCanPlayThrough(false);
     watchedRef.current = false;
+    metadataLoadedRef.current = false;
 
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    // Use a longer timeout (120s) for larger files that take time to
-    // download from Telegram. The 30s timeout was too aggressive.
     timeoutRef.current = setTimeout(() => {
-      setLoading(false);
-      if (!metadataLoaded) {
+      if (!metadataLoadedRef.current) {
+        setLoading(false);
         setLoadError(true);
       }
-    }, 120000);
+    }, 300000);
 
     const vid = videoRef.current;
     if (!vid) return;
 
     const handleLoadedMetadata = () => {
+      metadataLoadedRef.current = true;
       setMetadataLoaded(true);
       setLoading(false);
       if (timeoutRef.current) clearTimeout(timeoutRef.current);
@@ -106,18 +107,18 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, fileId, onWatched }) => 
     setLoading(true);
     setMetadataLoaded(false);
     setCanPlayThrough(false);
+    metadataLoadedRef.current = false;
     const vid = videoRef.current;
     if (vid) {
       vid.load();
     }
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
-    // Use longer timeout for retry too (120s)
     timeoutRef.current = setTimeout(() => {
-      setLoading(false);
-      if (!metadataLoaded) {
+      if (!metadataLoadedRef.current) {
+        setLoading(false);
         setLoadError(true);
       }
-    }, 120000);
+    }, 300000);
   };
 
   const handleBrowserDownload = () => {
@@ -166,7 +167,7 @@ const VideoPlayer: React.FC<VideoPlayerProps> = ({ src, fileId, onWatched }) => 
         ref={videoRef}
         src={src}
         controls
-        preload="auto"
+        preload="metadata"
         className={`w-full h-auto rounded-md ${loading && !metadataLoaded ? 'hidden' : ''}`}
       />
       {metadataLoaded && (

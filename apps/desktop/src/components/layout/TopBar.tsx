@@ -50,7 +50,7 @@ const ToolbarDivider: React.FC = () => (
 const TopBar: React.FC = () => {
   const { viewMode, setViewMode, search, setSearch, currentFolderId, setCurrentFolderId, currentSection,
     setCurrentSection, setSelectedVirtualFolderId, setSelectedPlaylistId, setSelectedTag,
-    selectedFile, setSelectedFile, sortField, setSortField, sortDirection, setSortDirection } = useSelection();
+    selectedFile, setSelectedFile, sortField, setSortField, sortDirection, setSortDirection, setPreviewFile } = useSelection();
   const { uploading, uploadFiles, progress: uploadProgress } = useUpload();
   const { clipboard, copyToClipboard, clearClipboard } = useClipboard();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -169,8 +169,7 @@ const TopBar: React.FC = () => {
 
   const handleOpenFile = () => {
     if (!selectedFile) return;
-    const url = filesApi.getStreamUrl(selectedFile.id);
-    window.open(url, '_blank');
+    setPreviewFile(selectedFile);
   };
 
   const setView = (mode: 'grid' | 'list' | 'details' | 'tiles') => {

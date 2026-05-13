@@ -9,9 +9,10 @@ import PlaylistView from '../views/PlaylistView';
 import TagView from '../views/TagView';
 import VirtualFolderView from '../views/VirtualFolderView';
 import { useSelection } from '../../hooks/useSelection';
+import FilePreviewModal from '../common/FilePreviewModal';
 
 const AppShell: React.FC = () => {
-  const { selectedFile, currentSection } = useSelection();
+  const { selectedFile, currentSection, previewFile, setPreviewFile } = useSelection();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const showDetails = selectedFile !== null && currentSection === 'files';
 
@@ -39,6 +40,9 @@ const AppShell: React.FC = () => {
         </div>
         {showDetails && <DetailsPanel />}
       </div>
+      {previewFile && (
+        <FilePreviewModal file={previewFile} onClose={() => setPreviewFile(null)} />
+      )}
     </div>
   );
 };

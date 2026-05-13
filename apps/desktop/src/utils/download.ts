@@ -1,31 +1,40 @@
 /**
  * Utility for downloading files from Telegram Drive.
- * 
- * Uses the stream endpoint with `?download=true` which returns the file
- * with proper Content-Disposition: attachment headers. The backend handles:
- * - Serving from local cache if available
- * - Streaming from Telegram parts on-demand (no local file write needed)
- * - Proper Content-Disposition and Content-Length headers
- * 
- * We use an anchor element with the `download` attribute so the browser
- * downloads the file instead of navigating to it.
+ *
+ * Uses fetch() to download the file as a blob, then triggers a browser
+ * download via a blob URL. This ensures the file is fully received
+ * before saving, avoiding 0 KB downloads that can occur when the
+ * backend streams slowly from Telegram.
  */
 
-import { getStreamUrl } from '../api/files';
+import { getDirectDownloadUrl, getStreamUrl } from '../api/files';
 
 /**
- * Download a file using the stream endpoint.
- * Opens in a new tab as fallback if anchor download fails.
+ * Download a file by fetching it as a blob and triggering a save dialog.
+ * Falls back to anchor-click on the stream endpoint if fetch fails.
  */
 export async function downloadFile(fileId: number, filename: string): Promise<void> {
-  const url = getStreamUrl(fileId, true);
-  
-  // Method 1: Use anchor element with download attribute (same-origin)
-  // This triggers the browser's download dialog with the correct filename
-  const link = document.createElement('a');
-  link.href = url;
-  link.download = filename;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  try {
+    const url = getDirectDownloadUrl(fileId);
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Download failed: ${response.status}`);
+    const blob = await response.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = blobUrl;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(blobUrl);
+  } catch {
+    // Fallback: direct anchor click on stream endpoint
+    const url = getStreamUrl(fileId, true);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
 }

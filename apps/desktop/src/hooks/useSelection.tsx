@@ -41,6 +41,9 @@ interface SelectionContextValue {
   /** Name of the currently selected tag for tag filtering. Null if none. */
   selectedTag: string | null;
   setSelectedTag: (tag: string | null) => void;
+  /** File currently being previewed in the full-screen modal. Null if none. */
+  previewFile: File | null;
+  setPreviewFile: (file: File | null) => void;
 }
 
 /**
@@ -82,6 +85,7 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({
   const [selectedVirtualFolderId, setSelectedVirtualFolderId] = useState<number | null>(null);
   const [selectedPlaylistId, setSelectedPlaylistId] = useState<number | null>(null);
   const [selectedTag, setSelectedTag] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<File | null>(null);
   return (
     <SelectionContext.Provider
       value={{
@@ -105,6 +109,8 @@ export const SelectionProvider: React.FC<{ children: React.ReactNode }> = ({
         setSelectedPlaylistId,
         selectedTag,
         setSelectedTag,
+        previewFile,
+        setPreviewFile,
       }}
     >
       {children}

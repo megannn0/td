@@ -61,6 +61,7 @@ const FileExplorer: React.FC = () => {
     search,
     sortField,
     sortDirection,
+    setPreviewFile,
   } = useSelection();
   const { files, loading: filesLoading, error: filesError, refresh: refreshFiles } =
     useFiles(currentFolderId, search);
@@ -150,6 +151,9 @@ const FileExplorer: React.FC = () => {
       setSelectedFile(null);
       setSelectedIds(new Set());
       setLastClickIndex(null);
+    } else {
+      setSelectedFile(item as AppFile);
+      setPreviewFile(item as AppFile);
     }
   };
 
@@ -232,6 +236,7 @@ const FileExplorer: React.FC = () => {
           if (isFile(i)) {
             setSelectedFile(i as AppFile);
             setSelectedItem(i);
+            setPreviewFile(i as AppFile);
           } else {
             const folder = i as Folder;
             setCurrentFolderId(folder.id);
